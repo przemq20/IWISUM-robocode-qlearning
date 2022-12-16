@@ -15,8 +15,8 @@ public class QLearner extends AdvancedRobot {
     private HashMap<Bullet, Decision> futureBulletsResults = new HashMap<Bullet, Decision>();
     private HashMap<String, Opponent> opponents = new HashMap<String, Opponent>();
     double prevEnergy = 100;
-    private static double alpha = 0.5;
-    private static double beta = 0.3;
+    private static double alpha = 0.6;
+    private static double beta = 0.4;
     private static double epsilon = 0.05;
 
 
@@ -72,26 +72,32 @@ public class QLearner extends AdvancedRobot {
             case NO_ACTION :
                 break;
             case TURN_GUN_LEFT:
-                turnGunLeft(5);
+                turnGunLeft(10);
                 break;
             case TURN_GUN_RIGHT:
-                turnGunRight(5);
+                turnGunRight(10);
+                break;
+            case SMALL_TURN_GUN_LEFT:
+                turnGunLeft(2);
+                break;
+            case SMALL_TURN_GUN_RIGHT:
+                turnGunRight(2);
                 break;
             case FIRE:
-                Bullet bullet = fireBullet(3);
+                Bullet bullet = fireBullet(1);
                 futureBulletsResults.put(bullet, new Decision(state, action));
                 break;
             case FORWARD:
-                ahead(20);
+                ahead(40);
                 break;
             case BACKWARD:
                 back(20);
                 break;
             case TURN_RIGHT:
-                turnRight(25);
+                turnRight(35);
                 break;
             case TURN_LEFT:
-                turnLeft(25);
+                turnLeft(35);
                 break;
         }
     }
@@ -165,7 +171,7 @@ public class QLearner extends AdvancedRobot {
     }
 
     private void updateKnowledge(Decision decision, boolean bulletHitSuccessfully) {
-        double reward = bulletHitSuccessfully ? 250 : 0;
+        double reward = bulletHitSuccessfully ? 500 : 0;
 
         if (q.containsKey(decision)) {
             double oldValue = q.get(decision);
@@ -235,6 +241,8 @@ public class QLearner extends AdvancedRobot {
 
     @Override
     public void onRoundEnded(RoundEndedEvent event) {
+        alpha=alpha-0.001;
+        beta=beta-0.001;
         hits = 0;
     }
 
