@@ -1,6 +1,7 @@
 import robocode.*;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,8 +13,9 @@ public class QLearner extends AdvancedRobot {
     private static final double startEpsilon = 0.1; // exploration rate
     private static final int attempts = 10000;
     private static final int timeToExperiment = attempts * 8 / 10;
-
+    private static String filename = "data.csv";
     private static final String QTABLE = "qTable.jo";
+
     private static int hits = 0;
     private static Map<Decision, Double> q = new HashMap<>();
     private HashMap<Bullet, Decision> futureBulletsResults = new HashMap<>();
@@ -21,15 +23,18 @@ public class QLearner extends AdvancedRobot {
     double prevEnergy = 100;
     private static double alpha = startAlpha;
     private static double epsilon = startEpsilon;
+    private int reward = 0;
+    private static ArrayList<Integer> rewards = new ArrayList<>();
 
     public void run() {
         load();
         setAdjustRadarForRobotTurn(true);
         State prevEnvState = getEnvState();
         State envState = getEnvState();
-        System.out.println(alpha);
-        System.out.println(gamma);
-        System.out.println(epsilon);
+        System.out.println("Alpha: " + alpha);
+        System.out.println("Gamma: " + gamma);
+        System.out.println("Epsilon: " + epsilon);
+
         while (true) {
             Action action = chooseAction(envState);
             takeAction(action, envState);
@@ -175,7 +180,7 @@ public class QLearner extends AdvancedRobot {
 
     private void updateKnowledge(Decision decision, boolean bulletHitSuccessfully) {
         double reward = bulletHitSuccessfully ? 500 : 0;
-
+        this.reward += reward;
         if (q.containsKey(decision)) {
             double oldValue = q.get(decision);
             double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()));
@@ -188,15 +193,16 @@ public class QLearner extends AdvancedRobot {
     private void updateKnowledge(Decision decision, State prevEnvState, State causedEnvState, double prevEnergy) {
         double reward = 0;
         if (abs(causedEnvState.getClosest_opponent_gun_heading()) -
-                abs(prevEnvState.getClosest_opponent_gun_heading()) <= 0)
+                abs(prevEnvState.getClosest_opponent_gun_heading()) <= 0) {
             reward = (float) (20 - abs(causedEnvState.getClosest_opponent_gun_heading())) / 2;
+            this.reward += reward;
+        }
         if (abs(causedEnvState.getClosest_opponent_gun_heading()) == 0) {
             reward = 20;
+            this.reward += reward;
         }
 
         reward += getEnergy() - prevEnergy;
-
-        System.out.println("Reward " + reward);
 
         if (q.containsKey(decision)) {
             double oldValue = q.get(decision);
@@ -243,8 +249,11 @@ public class QLearner extends AdvancedRobot {
 
     @Override
     public void onRoundEnded(RoundEndedEvent event) {
+        rewards.add(reward);
+
         reduceAlpha();
         reduceEpsilon();
+        reward = 0;
         hits = 0;
     }
 
@@ -266,7 +275,29 @@ public class QLearner extends AdvancedRobot {
     @Override
     public void onBattleEnded(BattleEndedEvent event) {
         save();
+        saveToCsv();
     }
+
+    private void saveToCsv() {
+        try {
+            File file = new File(getDataDirectory() + "/" + filename);
+            if (file.exists()) file.delete();
+
+            RobocodeFileOutputStream out = new RobocodeFileOutputStream(getDataDirectory() + "/" + filename, true);
+            StringBuilder dataToWrite = new StringBuilder();
+            int index = 0;
+            for (int reward : rewards) {
+                String s = index + "," + reward;
+                dataToWrite.append(s + "\n");
+                index++;
+            }
+            out.write(dataToWrite.toString().getBytes());
+            out.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     private void load() {
         try {
@@ -296,5 +327,4 @@ public class QLearner extends AdvancedRobot {
             ioe.printStackTrace();
         }
     }
-
 }
