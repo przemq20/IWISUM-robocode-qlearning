@@ -284,6 +284,7 @@ public class QLearner extends AdvancedRobot {
             if (file.exists()) file.delete();
 
             RobocodeFileOutputStream out = new RobocodeFileOutputStream(getDataDirectory() + "/" + filename, true);
+            out.write("round,reward\n".getBytes());
             StringBuilder dataToWrite = new StringBuilder();
             int index = 0;
             for (int reward : rewards) {
