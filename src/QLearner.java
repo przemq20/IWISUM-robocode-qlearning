@@ -8,12 +8,12 @@ import java.util.Map;
 import static java.lang.Math.*;
 
 public class QLearner extends AdvancedRobot {
-    private static final double startAlpha = 0.01; // learning rate
-    private static double gamma = 0.98; // discount factor
-    private static final double startEpsilon = 0.1; // exploration rate
+    private static final double startAlpha = 0.5; // learning rate
+    private static double gamma = 0.4; // discount factor
+    private static final double startEpsilon = 0.65; // exploration rate
     private static final int attempts = 10000;
     private static final int timeToExperiment = attempts * 8 / 10;
-    private static String filename = "data.csv";
+    private static String filename = "data_" + startAlpha + "_" + gamma + "_" + startEpsilon + ".csv";
     private static final String QTABLE = "qTable.jo";
 
     private static int hits = 0;
@@ -79,33 +79,33 @@ public class QLearner extends AdvancedRobot {
         switch (action) {
             case NO_ACTION:
                 break;
-            case TURN_GUN_LEFT:
-                turnGunLeft(10);
-                break;
-            case TURN_GUN_RIGHT:
-                turnGunRight(10);
-                break;
-            case SMALL_TURN_GUN_LEFT:
-                turnGunLeft(2);
-                break;
-            case SMALL_TURN_GUN_RIGHT:
-                turnGunRight(2);
-                break;
+//            case TURN_GUN_LEFT:
+//                turnGunLeft(10);
+//                break;
+//            case TURN_GUN_RIGHT:
+//                turnGunRight(10);
+//                break;
+//            case SMALL_TURN_GUN_LEFT:
+//                turnGunLeft(2);
+//                break;
+//            case SMALL_TURN_GUN_RIGHT:
+//                turnGunRight(2);
+//                break;
             case FIRE:
                 Bullet bullet = fireBullet(1);
                 futureBulletsResults.put(bullet, new Decision(state, action));
                 break;
-            case FORWARD:
-                ahead(40);
-                break;
-            case BACKWARD:
-                back(20);
-                break;
+//            case FORWARD:
+//                ahead(40);
+//                break;
+//            case BACKWARD:
+//                back(20);
+//                break;
             case TURN_RIGHT:
-                turnRight(35);
+                turnRight(45);
                 break;
             case TURN_LEFT:
-                turnLeft(35);
+                turnLeft(45);
                 break;
         }
     }
@@ -179,7 +179,7 @@ public class QLearner extends AdvancedRobot {
     }
 
     private void updateKnowledge(Decision decision, boolean bulletHitSuccessfully) {
-        double reward = bulletHitSuccessfully ? 500 : 0;
+        double reward = bulletHitSuccessfully ? 500 : -10;
         this.reward += reward;
         if (q.containsKey(decision)) {
             double oldValue = q.get(decision);
@@ -192,17 +192,18 @@ public class QLearner extends AdvancedRobot {
 
     private void updateKnowledge(Decision decision, State prevEnvState, State causedEnvState, double prevEnergy) {
         double reward = 0;
-        if (abs(causedEnvState.getClosest_opponent_gun_heading()) -
-                abs(prevEnvState.getClosest_opponent_gun_heading()) <= 0) {
-            reward = (float) (20 - abs(causedEnvState.getClosest_opponent_gun_heading())) / 2;
-            this.reward += reward;
-        }
-        if (abs(causedEnvState.getClosest_opponent_gun_heading()) == 0) {
+//        if (abs(causedEnvState.getClosest_opponent_gun_heading()) -
+//                abs(prevEnvState.getClosest_opponent_gun_heading()) <= 0) {
+//            reward = (float) (20 - abs(causedEnvState.getClosest_opponent_gun_heading())) / 2;
+//            this.reward += reward;
+//        }
+        if (abs(causedEnvState.getClosest_opponent_heading()) == 0) {
             reward = 20;
             this.reward += reward;
         }
 
         reward += getEnergy() - prevEnergy;
+        this.reward += reward;
 
         if (q.containsKey(decision)) {
             double oldValue = q.get(decision);
