@@ -25,17 +25,23 @@ public class State implements Serializable {
 
 
     public static int discreticizeGunHeading(double heading){
-        if(heading > 45.0) {
-            return 16;
-        } else if (heading < -45){
-            return -16;
+        if(heading > 75.0) {
+            return 6;
+        } else if (heading < -75){
+            return -6;
         } else {
-            return (int)(heading/3);
+            return (int)(heading/15);
         }
     }
 
     public static int discreticizeHeading(double heading){
-        return (int)(heading/10);
+        if(heading > 60) {
+            return 4;
+        } else if (heading < -60){
+            return -4;
+        } else {
+            return (int)(heading/20);
+        }
     }
 
     public static int discreticizeOpponentDistance(double distance) {

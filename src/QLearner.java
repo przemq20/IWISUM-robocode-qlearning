@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.Math.*;
-
+import java.awt.Color;
 public class QLearner extends AdvancedRobot {
-    private static final double startAlpha = 0.5; // learning rate
-    private static double gamma = 0.4; // discount factor
-    private static final double startEpsilon = 0.65; // exploration rate
+    private static final double startAlpha = 0.4; // learning rate
+    private static double gamma = 0.05; // discount factor
+    private static final double startEpsilon = 0.2; // exploration rate
     private static final int attempts = 10000;
     private static final int timeToExperiment = attempts * 8 / 10;
     private static String filename = "data_" + startAlpha + "_" + gamma + "_" + startEpsilon + ".csv";
@@ -28,6 +28,7 @@ public class QLearner extends AdvancedRobot {
 
     public void run() {
         load();
+        setBodyColor(Color.YELLOW);
         setAdjustRadarForRobotTurn(true);
         State prevEnvState = getEnvState();
         State envState = getEnvState();
@@ -40,7 +41,6 @@ public class QLearner extends AdvancedRobot {
             takeAction(action, envState);
 
             envState = getEnvState();
-
             updateKnowledge(new Decision(prevEnvState, action), prevEnvState, envState, prevEnergy);
             prevEnvState = envState;
             prevEnergy = getEnergy();
@@ -102,10 +102,10 @@ public class QLearner extends AdvancedRobot {
 //                back(20);
 //                break;
             case TURN_RIGHT:
-                turnRight(45);
+                turnRight(15);
                 break;
             case TURN_LEFT:
-                turnLeft(45);
+                turnLeft(22);
                 break;
         }
     }
@@ -117,7 +117,7 @@ public class QLearner extends AdvancedRobot {
         double opponentDistance = getNearestKnownOpponentDistance();
 
         double gunDistanceToOpponent = ((opponentAngle - gunAngle + 180) + 360) % 360 - 180;
-
+        System.out.println(String.valueOf(((opponentAngle - getHeading() + 180) + 360) % 360 - 180));
         State res = new State(gunDistanceToOpponent, ((opponentAngle - getHeading() + 180) + 360) % 360 - 180, opponentDistance);
         return res;
     }
@@ -192,13 +192,14 @@ public class QLearner extends AdvancedRobot {
 
     private void updateKnowledge(Decision decision, State prevEnvState, State causedEnvState, double prevEnergy) {
         double reward = 0;
-//        if (abs(causedEnvState.getClosest_opponent_gun_heading()) -
-//                abs(prevEnvState.getClosest_opponent_gun_heading()) <= 0) {
-//            reward = (float) (20 - abs(causedEnvState.getClosest_opponent_gun_heading())) / 2;
-//            this.reward += reward;
-//        }
-        if (abs(causedEnvState.getClosest_opponent_heading()) == 0) {
-            reward = 20;
+
+        if (abs(causedEnvState.getClosest_opponent_heading()) < abs(prevEnvState.getClosest_opponent_heading())) {
+            reward = 200;
+            this.reward += reward;
+        }
+
+        if (abs(causedEnvState.getClosest_opponent_heading())==0) {
+            reward = 30;
             this.reward += reward;
         }
 
@@ -206,6 +207,7 @@ public class QLearner extends AdvancedRobot {
         this.reward += reward;
 
         if (q.containsKey(decision)) {
+            System.out.println("WEEEEEE");
             double oldValue = q.get(decision);
             double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(causedEnvState));
             q.put(decision, newValue);
