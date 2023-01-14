@@ -64,4 +64,22 @@ public class State implements Serializable {
     public int getClosest_opponent_heading() {
         return closest_opponent_heading;
     }
+
+    @Override
+    public String toString(){
+        return "Opponent heading: " + closest_opponent_heading;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof State)) {
+            return false;
+        }
+        State d = (State) o;
+        return this.closest_opponent_heading == d.closest_opponent_heading;
+    }
 }

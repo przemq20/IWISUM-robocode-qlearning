@@ -1,23 +1,23 @@
 import robocode.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.Math.*;
+
 import java.awt.Color;
+
 public class QLearner extends AdvancedRobot {
-    private static final double startAlpha = 0.4; // learning rate
-    private static double gamma = 0.05; // discount factor
-    private static final double startEpsilon = 0.2; // exploration rate
-    private static final int attempts = 10000;
-    private static final int timeToExperiment = attempts * 8 / 10;
+    private static final double startAlpha = 0.8; // learning rate
+    private static final double gamma = 0.6; // discount factor
+    private static final double startEpsilon = 0.5; // exploration rate
+    private static final int attempts = 1000;
+    private static final int timeToExperiment = attempts * 10 / 10;
     private static String filename = "data_" + startAlpha + "_" + gamma + "_" + startEpsilon + ".csv";
-    private static final String QTABLE = "qTable.jo";
+//    private static final String QTABLE = "qTable.jo";
 
     private static int hits = 0;
-    private static Map<Decision, Double> q = new HashMap<>();
+    private static Map<String, Double> q = new HashMap<>();
     private HashMap<Bullet, Decision> futureBulletsResults = new HashMap<>();
     private HashMap<String, Opponent> opponents = new HashMap<>();
     double prevEnergy = 100;
@@ -27,16 +27,17 @@ public class QLearner extends AdvancedRobot {
     private static ArrayList<Integer> rewards = new ArrayList<>();
 
     public void run() {
-        load();
+//        load();
         setBodyColor(Color.YELLOW);
         setAdjustRadarForRobotTurn(true);
         State prevEnvState = getEnvState();
-        State envState = getEnvState();
+        State envState = prevEnvState;
         System.out.println("Alpha: " + alpha);
         System.out.println("Gamma: " + gamma);
         System.out.println("Epsilon: " + epsilon);
 
         while (true) {
+            this.execute();
             Action action = chooseAction(envState);
             takeAction(action, envState);
 
@@ -45,7 +46,7 @@ public class QLearner extends AdvancedRobot {
             prevEnvState = envState;
             prevEnergy = getEnergy();
 
-            turnRadarRight(-45); //maximum radar angle per ture
+//            turnRadarRight(-45); //maximum radar angle per ture
         }
     }
 
@@ -57,8 +58,8 @@ public class QLearner extends AdvancedRobot {
 
         for (Action a : Action.values()) {
             Decision decision = new Decision(envState, a);
-            if (q.containsKey(decision)) {
-                double possibleFutureValue = q.get(decision);
+            if (q.containsKey(decision.toString())) {
+                double possibleFutureValue = q.get(decision.toString());
                 if (possibleFutureValue > maxPossibleFutureValue) {
                     maxPossibleFutureValue = possibleFutureValue;
                     bestAction = a;
@@ -102,10 +103,10 @@ public class QLearner extends AdvancedRobot {
 //                back(20);
 //                break;
             case TURN_RIGHT:
-                turnRight(15);
+                turnRight(10);
                 break;
             case TURN_LEFT:
-                turnLeft(22);
+                turnLeft(10);
                 break;
         }
     }
@@ -117,9 +118,8 @@ public class QLearner extends AdvancedRobot {
         double opponentDistance = getNearestKnownOpponentDistance();
 
         double gunDistanceToOpponent = ((opponentAngle - gunAngle + 180) + 360) % 360 - 180;
-        System.out.println(String.valueOf(((opponentAngle - getHeading() + 180) + 360) % 360 - 180));
-        State res = new State(gunDistanceToOpponent, ((opponentAngle - getHeading() + 180) + 360) % 360 - 180, opponentDistance);
-        return res;
+//        System.out.println(String.valueOf(((opponentAngle - getHeading() + 180) + 360) % 360 - 180));
+        return new State(gunDistanceToOpponent, ((opponentAngle - getHeading() + 180) + 360) % 360 - 180, opponentDistance);
     }
 
     private double getNearestKnownOpponentHeading() {
@@ -163,8 +163,8 @@ public class QLearner extends AdvancedRobot {
 
         for (Action a : Action.values()) {
             Decision decision = new Decision(causedEnvState, a);
-            if (q.containsKey(decision)) {
-                double possibleFutureValue = q.get(decision);
+            if (q.containsKey(decision.toString())) {
+                double possibleFutureValue = q.get(decision.toString());
                 if (possibleFutureValue > maxPossibleFutureValue) {
                     maxPossibleFutureValue = possibleFutureValue;
                 }
@@ -181,12 +181,12 @@ public class QLearner extends AdvancedRobot {
     private void updateKnowledge(Decision decision, boolean bulletHitSuccessfully) {
         double reward = bulletHitSuccessfully ? 500 : -10;
         this.reward += reward;
-        if (q.containsKey(decision)) {
-            double oldValue = q.get(decision);
-            double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()));
-            q.put(decision, newValue);
+        if (q.containsKey(decision.toString())) {
+            double oldValue = q.get(decision.toString());
+            double newValue = oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()) - oldValue);
+            q.put(decision.toString(), newValue);
         } else {
-            q.put(decision, reward);
+            q.put(decision.toString(), reward);
         }
     }
 
@@ -198,21 +198,19 @@ public class QLearner extends AdvancedRobot {
             this.reward += reward;
         }
 
-        if (abs(causedEnvState.getClosest_opponent_heading())==0) {
+        if (abs(causedEnvState.getClosest_opponent_heading()) == 0) {
             reward = 30;
             this.reward += reward;
         }
 
         reward += getEnergy() - prevEnergy;
         this.reward += reward;
-
-        if (q.containsKey(decision)) {
-            System.out.println("WEEEEEE");
-            double oldValue = q.get(decision);
-            double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(causedEnvState));
-            q.put(decision, newValue);
+        if (q.containsKey(decision.toString())) {
+            double oldValue = q.get(decision.toString());
+            double newValue = oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(causedEnvState) - oldValue);
+            q.put(decision.toString(), newValue);
         } else {
-            q.put(decision, reward);
+            q.put(decision.toString(), reward);
         }
     }
 
@@ -262,22 +260,20 @@ public class QLearner extends AdvancedRobot {
 
 
     public void reduceAlpha() {
-        if (alpha <= 0) alpha = 0;
-        else {
-            alpha -= startAlpha / timeToExperiment;
-        }
+        double minAlpha = 0.0001;
+        if (alpha >= minAlpha)
+            alpha = max(alpha - (startAlpha / (double) timeToExperiment), minAlpha);
     }
 
     public void reduceEpsilon() {
-        if (epsilon <= 0) epsilon = 0;
-        else {
-            epsilon -= startEpsilon / timeToExperiment;
-        }
+        double minEpsilon = 0.0001;
+        if (epsilon >= minEpsilon)
+            epsilon = max(epsilon - (startEpsilon / (double) timeToExperiment), minEpsilon);
     }
 
     @Override
     public void onBattleEnded(BattleEndedEvent event) {
-        save();
+//        save();
         saveToCsv();
     }
 
@@ -292,7 +288,7 @@ public class QLearner extends AdvancedRobot {
             int index = 0;
             for (int reward : rewards) {
                 String s = index + "," + reward;
-                dataToWrite.append(s + "\n");
+                dataToWrite.append(s).append("\n");
                 index++;
             }
             out.write(dataToWrite.toString().getBytes());
@@ -302,33 +298,33 @@ public class QLearner extends AdvancedRobot {
         }
     }
 
+//
+//    private void load() {
+//        try {
+//            File f = getDataFile(QTABLE);
+//            FileInputStream fis = new FileInputStream(f);
+//            ObjectInputStream ois = new ObjectInputStream(fis);
+//            q = (HashMap) ois.readObject();
+//            ois.close();
+//            fis.close();
+//        } catch (IOException ioe) {
+//            ioe.printStackTrace();
+//        } catch (ClassNotFoundException c) {
+//            System.out.println("Class not found");
+//            c.printStackTrace();
+//        }
+//    }
 
-    private void load() {
-        try {
-            File f = getDataFile(QTABLE);
-            FileInputStream fis = new FileInputStream(f);
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            q = (HashMap) ois.readObject();
-            ois.close();
-            fis.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } catch (ClassNotFoundException c) {
-            System.out.println("Class not found");
-            c.printStackTrace();
-        }
-    }
-
-    private void save() {
-        try {
-            File f = getDataFile(QTABLE);
-            RobocodeFileOutputStream fos = new RobocodeFileOutputStream(f);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(q);
-            oos.close();
-            fos.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
+//    private void save() {
+//        try {
+//            File f = getDataFile(QTABLE);
+//            RobocodeFileOutputStream fos = new RobocodeFileOutputStream(f);
+//            ObjectOutputStream oos = new ObjectOutputStream(fos);
+//            oos.writeObject(q);
+//            oos.close();
+//            fos.close();
+//        } catch (IOException ioe) {
+//            ioe.printStackTrace();
+//        }
+//    }
 }
