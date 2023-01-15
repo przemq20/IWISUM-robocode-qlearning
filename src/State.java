@@ -35,12 +35,12 @@ public class State implements Serializable {
     }
 
     public static int discreticizeHeading(double heading){
-        if(heading > 60) {
-            return 4;
-        } else if (heading < -60){
-            return -4;
+        if(heading > 120) {
+            return 13;
+        } else if (heading < -120){
+            return -13;
         } else {
-            return (int)(heading/20);
+            return (int)(heading/10);
         }
     }
 

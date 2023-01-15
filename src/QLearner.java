@@ -9,8 +9,8 @@ import java.awt.Color;
 
 public class QLearner extends AdvancedRobot {
     private static final double startAlpha = 0.8; // learning rate
-    private static final double gamma = 0.6; // discount factor
-    private static final double startEpsilon = 0.5; // exploration rate
+    private static final double gamma = 0.95; // discount factor
+    private static final double startEpsilon = 0.7; // exploration rate
     private static final int attempts = 1000;
     private static final int timeToExperiment = attempts * 10 / 10;
     private static String filename = "data_" + startAlpha + "_" + gamma + "_" + startEpsilon + ".csv";
@@ -27,8 +27,9 @@ public class QLearner extends AdvancedRobot {
     private static ArrayList<Integer> rewards = new ArrayList<>();
 
     public void run() {
+        System.out.println(getDataDirectory());
 //        load();
-        setBodyColor(Color.YELLOW);
+        setBodyColor(Color.RED);
         setAdjustRadarForRobotTurn(true);
         State prevEnvState = getEnvState();
         State envState = prevEnvState;
@@ -78,8 +79,8 @@ public class QLearner extends AdvancedRobot {
 
     public void takeAction(Action action, State state) {
         switch (action) {
-            case NO_ACTION:
-                break;
+            //case NO_ACTION:
+            //    break;
 //            case TURN_GUN_LEFT:
 //                turnGunLeft(10);
 //                break;
@@ -194,16 +195,21 @@ public class QLearner extends AdvancedRobot {
         double reward = 0;
 
         if (abs(causedEnvState.getClosest_opponent_heading()) < abs(prevEnvState.getClosest_opponent_heading())) {
-            reward = 200;
+            reward = 10;
+            this.reward += reward;
+        }
+
+        if (abs(causedEnvState.getClosest_opponent_heading()) > abs(prevEnvState.getClosest_opponent_heading())) {
+            reward = -10;
             this.reward += reward;
         }
 
         if (abs(causedEnvState.getClosest_opponent_heading()) == 0) {
-            reward = 30;
+            reward = 10;
             this.reward += reward;
         }
 
-        reward += getEnergy() - prevEnergy;
+        //reward += getEnergy() - prevEnergy;
         this.reward += reward;
         if (q.containsKey(decision.toString())) {
             double oldValue = q.get(decision.toString());
@@ -251,7 +257,7 @@ public class QLearner extends AdvancedRobot {
     @Override
     public void onRoundEnded(RoundEndedEvent event) {
         rewards.add(reward);
-
+        System.out.println(String.valueOf(reward));
         reduceAlpha();
         reduceEpsilon();
         reward = 0;
@@ -260,15 +266,15 @@ public class QLearner extends AdvancedRobot {
 
 
     public void reduceAlpha() {
-        double minAlpha = 0.0001;
+        double minAlpha = 0.06;
         if (alpha >= minAlpha)
-            alpha = max(alpha - (startAlpha / (double) timeToExperiment), minAlpha);
+            alpha = max(alpha - ((startAlpha / (double) timeToExperiment)/2.0), minAlpha);
     }
 
     public void reduceEpsilon() {
-        double minEpsilon = 0.0001;
+        double minEpsilon = 0.06;
         if (epsilon >= minEpsilon)
-            epsilon = max(epsilon - (startEpsilon / (double) timeToExperiment), minEpsilon);
+            epsilon = max(epsilon - ((startEpsilon / (double) timeToExperiment)/2.0), minEpsilon);
     }
 
     @Override
@@ -287,6 +293,7 @@ public class QLearner extends AdvancedRobot {
             StringBuilder dataToWrite = new StringBuilder();
             int index = 0;
             for (int reward : rewards) {
+                System.out.println(String.valueOf(reward));
                 String s = index + "," + reward;
                 dataToWrite.append(s).append("\n");
                 index++;
