@@ -29,7 +29,7 @@ public class QLearner extends AdvancedRobot {
     public void run() {
         System.out.println(getDataDirectory());
 //        load();
-        setBodyColor(Color.RED);
+        setBodyColor(Color.BLACK);
         setAdjustRadarForRobotTurn(true);
         State prevEnvState = getEnvState();
         State envState = prevEnvState;
@@ -268,13 +268,13 @@ public class QLearner extends AdvancedRobot {
     public void reduceAlpha() {
         double minAlpha = 0.06;
         if (alpha >= minAlpha)
-            alpha = max(alpha - ((startAlpha / (double) timeToExperiment)/2.0), minAlpha);
+            alpha = max(alpha - ((startAlpha / (double) timeToExperiment)/4.0), minAlpha);
     }
 
     public void reduceEpsilon() {
         double minEpsilon = 0.06;
         if (epsilon >= minEpsilon)
-            epsilon = max(epsilon - ((startEpsilon / (double) timeToExperiment)/2.0), minEpsilon);
+            epsilon = max(epsilon - ((startEpsilon / (double) timeToExperiment)/3.0), minEpsilon);
     }
 
     @Override
