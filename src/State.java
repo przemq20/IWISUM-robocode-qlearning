@@ -15,14 +15,6 @@ public class State implements Serializable {
 
     }
 
-//    public State(double closest_opponent_distance){
-////        this.closest_opponent_gun_heading = discreticizeGunHeading(closest_opponent_gun_heading);
-////        this.closest_opponent_heading = discreticizeHeading(closest_opponent_heading);
-//        this.closest_opponent_distance = discreticizeOpponentDistance(closest_opponent_distance);
-//
-//    }
-
-
 
     public static int discreticizeGunHeading(double heading){
         if(heading > 75.0) {
