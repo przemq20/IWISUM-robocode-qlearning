@@ -17,12 +17,12 @@ for filename in os.listdir(directory):
         name = (os.path.basename(f).split('/')[-1])
         args = (f).split('_')
         alpha = args[1]
-        beta = args[2]
+        gamma = args[2]
         epsilon = args[3][:len(args[3]) -4]
         df = pd.read_csv(f,usecols = columns)
 
         running = df['reward'].rolling(50).mean()
-        plt.title('Alpha= ' + alpha + ", beta= " + beta + ', epsilon= ' + epsilon)
+        plt.title('Alpha= ' + alpha + ", gamma= " + gamma + ', epsilon= ' + epsilon)
         plt.xlabel('Round')
         plt.ylabel('Reward')
         plt.plot(df['round'], df['reward'], running)
