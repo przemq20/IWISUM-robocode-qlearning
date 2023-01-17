@@ -8,9 +8,9 @@ import static java.lang.Math.*;
 import java.awt.Color;
 
 public class QLearner extends AdvancedRobot {
-    private static final double startAlpha = 0.8; // learning rate
-    private static final double gamma = 0.95; // discount factor
-    private static final double startEpsilon = 0.7; // exploration rate
+    private static final double startAlpha = 0.9; // learning rate
+    private static final double gamma = 0.85; // discount factor
+    private static final double startEpsilon = 0.75; // exploration rate
     private static final int attempts = 1000;
     private static final int timeToExperiment = attempts * 10 / 10;
     private static String filename = "data_" + startAlpha + "_" + gamma + "_" + startEpsilon + ".csv";
@@ -25,6 +25,7 @@ public class QLearner extends AdvancedRobot {
     private static double epsilon = startEpsilon;
     private int reward = 0;
     private static ArrayList<Integer> rewards = new ArrayList<>();
+    private final int degrees = 7;
 
     public void run() {
         System.out.println(getDataDirectory());
@@ -39,7 +40,6 @@ public class QLearner extends AdvancedRobot {
 
         for (int i = 0; i < 8; i++) {
             turnRadarRight(45);
-            turnRight(45);
         }
 
         while (true) {
@@ -103,18 +103,18 @@ public class QLearner extends AdvancedRobot {
                 futureBulletsResults.put(bullet, new Decision(state, action));
                 break;
 //            case FORWARD:
-//                ahead(40);
+//                ahead(20);
 //                break;
 //            case BACKWARD:
 //                back(20);
 //                break;
             case TURN_RIGHT:
-                turnRight(10);
-                turnRadarRight(10);
+                turnRight(degrees);
+                turnRadarRight(degrees);
                 break;
             case TURN_LEFT:
-                turnLeft(10);
-                turnRadarLeft(10);
+                turnLeft(degrees);
+                turnRadarLeft(degrees);
                 break;
         }
     }
@@ -126,7 +126,6 @@ public class QLearner extends AdvancedRobot {
         double opponentDistance = getNearestKnownOpponentDistance();
 
         double gunDistanceToOpponent = ((opponentAngle - gunAngle + 180) + 360) % 360 - 180;
-//        System.out.println(String.valueOf(((opponentAngle - getHeading() + 180) + 360) % 360 - 180));
         return new State(gunDistanceToOpponent, ((opponentAngle - getHeading() + 180) + 360) % 360 - 180, opponentDistance);
     }
 
@@ -191,7 +190,7 @@ public class QLearner extends AdvancedRobot {
         this.reward += reward;
         if (q.containsKey(decision.toString())) {
             double oldValue = q.get(decision.toString());
-            double newValue = oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()) - oldValue);
+            double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()));
             q.put(decision.toString(), newValue);
         } else {
             q.put(decision.toString(), reward);
@@ -212,16 +211,14 @@ public class QLearner extends AdvancedRobot {
         }
 
         if (abs(causedEnvState.getClosest_opponent_heading()) == 0) {
-            System.out.println("WEEEE");
             reward = 20;
 //            this.reward += reward;
         }
-        System.out.println(opponents);
         //reward += getEnergy() - prevEnergy;
         this.reward += reward;
         if (q.containsKey(decision.toString())) {
             double oldValue = q.get(decision.toString());
-            double newValue = oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(causedEnvState) - oldValue);
+            double newValue = (1 - alpha) * oldValue + alpha * (reward + gamma * getEstimateOfPossibleFutureValue(getEnvState()));
             q.put(decision.toString(), newValue);
         } else {
             q.put(decision.toString(), reward);
@@ -301,7 +298,6 @@ public class QLearner extends AdvancedRobot {
             StringBuilder dataToWrite = new StringBuilder();
             int index = 0;
             for (int reward : rewards) {
-                System.out.println(String.valueOf(reward));
                 String s = index + "," + reward;
                 dataToWrite.append(s).append("\n");
                 index++;

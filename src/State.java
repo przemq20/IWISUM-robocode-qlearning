@@ -4,14 +4,14 @@ import java.io.Serializable;
 public class State implements Serializable {
 //    private int closest_opponent_gun_heading;
     private int closest_opponent_heading;
-//    private int closest_opponent_distance;
+    private int closest_opponent_distance;
 //    private int closest_bullet_distance;
 
 
-    public State(double closest_opponent_gun_heading,double closest_opponent_heading,double closest_opponent_distance){
+    public State(double closest_opponent_gun_heading,double closest_opponent_heading, double closest_opponent_distance){
 //        this.closest_opponent_gun_heading = discreticizeGunHeading(closest_opponent_gun_heading);
         this.closest_opponent_heading = discreticizeHeading(closest_opponent_heading);
-//        this.closest_opponent_distance = discreticizeOpponentDistance(closest_opponent_distance);
+        this.closest_opponent_distance = discreticizeOpponentDistance(closest_opponent_distance);
 
     }
 
@@ -27,12 +27,12 @@ public class State implements Serializable {
     }
 
     public static int discreticizeHeading(double heading){
-        if(heading > 120) {
-            return 13;
-        } else if (heading < -120){
-            return -13;
+        if(heading > 150) {
+            return 33;
+        } else if (heading < -150){
+            return -33;
         } else {
-            return (int)(heading/10);
+            return (int)(heading/5);
         }
     }
 
@@ -45,9 +45,9 @@ public class State implements Serializable {
 //        return closest_bullet_distance;
 //    }
 //
-//    public int getClosest_opponent_distance() {
-//        return closest_opponent_distance;
-//    }
+    public int getClosest_opponent_distance() {
+        return closest_opponent_distance;
+    }
 
 //    public int getClosest_opponent_gun_heading() {
 //        return closest_opponent_gun_heading;
@@ -59,7 +59,7 @@ public class State implements Serializable {
 
     @Override
     public String toString(){
-        return "Opponent heading: " + closest_opponent_heading;
+        return "Opponent heading: " + closest_opponent_heading + ", Opponent distance: " + closest_opponent_distance;
     }
 
     @Override
